@@ -1,63 +1,64 @@
-import { Chess, Color, PieceSymbol, Square } from "chess.js";
 import { useState } from "react";
-import { MOVE } from "../screens/Game";
 
-export const ChessBoard = ({ chess, board, socket, setBoard }: {
-    chess: Chess;
-    setBoard: React.Dispatch<React.SetStateAction<({
-        square: Square;
-        type: PieceSymbol;
-        color: Color;
-    } | null)[][]>>;
-    board: ({
-        square: Square;
-        type: PieceSymbol;
-        color: Color;
-    } | null)[][];
+export const ChessBoard = ({
+    board,
+    socket,
+    currentPlayer,
+}: {
+    board: (string | null)[][];
     socket: WebSocket;
+    currentPlayer: 'A' | 'B';
 }) => {
-    const [from, setFrom] = useState<null | Square>(null);
+    const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
 
-    return <div className="text-white-200">
-        {board.map((row, i) => {
-            return <div key={i} className="flex">
-                {row.map((square, j) => {
-                    const squareRepresentation = String.fromCharCode(97 + (j % 8)) + "" + (8 - i) as Square;
+    const handleSquareClick = (x: number, y: number) => {
+        if (selected) {
+            const from = selected;
+            const to = { x, y };
 
-                    return <div onClick={() => {
-                        if (!from) {
-                            setFrom(squareRepresentation);
-                        } else {
-                            socket.send(JSON.stringify({
-                                type: MOVE,
-                                payload: {
-                                    move: {
-                                        from,
-                                        to: squareRepresentation
-                                    }
-                                }
-                            }))
-                            
-                            setFrom(null)
-                            chess.move({
-                                from,
-                                to: squareRepresentation
-                            });
-                            setBoard(chess.board());
-                            console.log({
-                                from,
-                                to: squareRepresentation
-                            })
-                        }
-                    }} key={j} className={`w-16 h-16 ${(i+j)%2 === 0 ? 'bg-green-500' : 'bg-slate-500'}`}>
-                        <div className="w-full justify-center flex h-full">
-                            <div className="h-full justify-center flex flex-col">
-                                {square ? <img className="w-4" src={`/${square?.color === "b" ? square?.type : `${square?.type?.toUpperCase()} copy`}.png`} /> : null} 
+            console.log(`Move from ${from.x},${from.y} to ${to.x},${to.y}`);
+
+            socket.send(
+                JSON.stringify({
+                    type: "move",
+                    payload: {
+                        move: { from, to },
+                    },
+                })
+            );
+
+            setSelected(null);
+        } else if (board[y][x]?.startsWith(currentPlayer)) {
+            console.log(`Selected square: ${x},${y} (${board[y][x]})`);
+            setSelected({ x, y });
+        }
+    };
+
+    return (
+        <div className="text-white-200">
+            {board.map((row, y) => (
+                <div key={y} className="flex">
+                    {row.map((square, x) => (
+                        <div
+                            key={x}
+                            onClick={() => handleSquareClick(x, y)}
+                            className={`w-16 h-16 ${
+                                (x + y) % 2 === 0 ? 'bg-green-500' : 'bg-slate-500'
+                            } ${selected && selected.x === x && selected.y === y ? 'bg-blue-500' : ''}`}
+                        >
+                            <div className="w-full justify-center flex h-full">
+                                <div className="h-full justify-center flex flex-col">
+                                    {square ? (
+                                        <div className="text-center text-lg font-bold">
+                                            {square}
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                })}
-            </div>
-        })}
-    </div>
-}
+                    ))}
+                </div>
+            ))}
+        </div>
+    );
+};

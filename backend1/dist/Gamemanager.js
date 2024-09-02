@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameManager = void 0;
 const messages_1 = require("./messages");
 const game_1 = require("./game");
-// User, Game
 class GameManager {
     constructor() {
         this.games = [];
@@ -16,7 +15,6 @@ class GameManager {
     }
     removeUser(socket) {
         this.users = this.users.filter(user => user !== socket);
-        // Stop the game here because the user left
     }
     addHandler(socket) {
         socket.on("message", (data) => {
@@ -32,11 +30,9 @@ class GameManager {
                 }
             }
             if (message.type === messages_1.MOVE) {
-                console.log("inside move");
-                const game = this.games.find(game => game.player1 === socket || game.player2 === socket);
+                const game = this.games.find(g => g.player1 === socket || g.player2 === socket);
                 if (game) {
-                    console.log("inside makemove");
-                    game.makeMove(socket, message.payload.move);
+                    game.makeMove(socket, message.payload.characterType, message.payload.move);
                 }
             }
         });

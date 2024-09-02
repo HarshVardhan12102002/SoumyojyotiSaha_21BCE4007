@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { INIT_GAME, MOVE } from "./messages";
 import { Game } from "./game";
-// User, Game
+
 export class GameManager {
     private games: Game[];
     private pendingUser: WebSocket | null;
@@ -15,12 +15,11 @@ export class GameManager {
 
     addUser(socket: WebSocket) {
         this.users.push(socket);
-        this.addHandler(socket)
+        this.addHandler(socket);
     }
 
     removeUser(socket: WebSocket) {
         this.users = this.users.filter(user => user !== socket);
-        // Stop the game here because the user left
     }
 
     private addHandler(socket: WebSocket) {
@@ -38,13 +37,11 @@ export class GameManager {
             }
 
             if (message.type === MOVE) {
-                console.log("inside move")
-                const game = this.games.find(game => game.player1 === socket || game.player2 === socket);
+                const game = this.games.find(g => g.player1 === socket || g.player2 === socket);
                 if (game) {
-                    console.log("inside makemove")
-                    game.makeMove(socket, message.payload.move);
+                    game.makeMove(socket, message.payload.characterType, message.payload.move);
                 }
             }
-        })
+        });
     }
 }
